@@ -1,6 +1,7 @@
 import sublime
 import sublime_plugin
 import re
+import os.path
 
 
 def uniq(list):
@@ -75,7 +76,7 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
 
     def find_candidates(self, prefix, position, text):
         # load candidates from settings
-        candidates = []
+        candidates = self.populate_candidates(prefix)
 
         regex = re.compile(r'[^\w\d](' + re.escape(prefix) + r'[\w\d]+)', re.M | re.U)
         for match in regex.finditer(text):
@@ -92,3 +93,31 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         if candidates:
             candidates.append(prefix)
         return uniq(candidates)
+
+    def populate_candidates(self, prefix):
+        settings_name, _ = os.path.splitext(os.path.basename(self.view.settings().get('syntax')))
+        default_settings = sublime.load_settings("alternative_autocompletion.sublime-settings")
+        default_candidates = default_settings.get(settings_name)
+
+        user_settings = sublime.load_settings(settings_name + ".sublime-settings")
+        user_candidates = user_settings.get('autocomplete')
+
+        # some languages, like "HTML 5", map to another language, like "PHP"
+        # so if default_candidates is a str/unicode, look for that list
+        while isinstance(default_candidates, str) or isinstance(default_candidates, unicode):
+            settings_name = default_candidates
+            default_candidates = default_settings.get(settings_name)
+            if not user_candidates:
+                user_settings = sublime.load_settings(settings_name + ".sublime-settings")
+                user_candidates = user_settings.get('autocomplete')
+
+        if default_candidates:
+            candidates = [Candidate(self.view.size(), c) for c in default_candidates if c[:len(prefix)] == prefix]
+        else:
+            candidates = []
+
+        # now merge user settings
+        if user_candidates:
+            candidates.extend([Candidate(self.view.size(), c) for c in user_candidates if c[:len(prefix)] == prefix])
+
+        return candidates
