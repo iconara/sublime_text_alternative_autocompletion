@@ -104,7 +104,7 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
 
         # some languages, like "HTML 5", map to another language, like "PHP"
         # so if default_candidates is a str/unicode, look for that list
-        while isinstance(default_candidates, str) or isinstance(default_candidates, unicode):
+        while isinstance(default_candidates, basestring):
             settings_name = default_candidates
             default_candidates = default_settings.get(settings_name)
             if not user_candidates:
