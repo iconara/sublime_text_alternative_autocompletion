@@ -39,8 +39,11 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, cycle='next', default=''):
         self.edit = edit
-        self.insert_completion(self.view.sel()[0].b,
-            self.view.substr(sublime.Region(0, self.view.size())), cycle, default)
+        text = self.view.substr(sublime.Region(0, self.view.size()))
+        # lines = self.view.substr(sublime.Region(0, self.view.size())).splitlines()
+        # remove initial indentation.  this makes the "distance" calculation more equitable
+        # text = "\n".join(map(lambda s: re.sub('^[ \t]+', '', s), lines))
+        self.insert_completion(self.view.sel()[0].b, text, cycle, default)
 
     def insert_completion(self, position, text, cycle, default):
         prefix_match = re.search(r'([\w\d_]+)\Z', text[0:position], re.M | re.U)
