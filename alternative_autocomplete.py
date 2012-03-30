@@ -2,6 +2,7 @@ import sublime
 import sublime_plugin
 import re
 import os.path
+from levenshtein import levenshtein
 
 
 def uniq(list):
@@ -9,14 +10,15 @@ def uniq(list):
     return [value for value in list if value not in seen and not seen.add(value)]
 
 
-def fuzzy_match(query, word):
-    query, word = query.lower(), word.lower()
-    qi, wi = 0, 0
-    while qi < len(query):
-        wi = word.find(query[qi], wi)
-        if wi == -1:
+def fuzzy_match(prefix, word):
+    prefix, word = prefix.lower(), word.lower()
+    query_i, word_i, next_i = 0, -1, -1
+    while query_i < len(prefix):
+        word_i = word.find(prefix[query_i], word_i + 1)
+        if word_i <= next_i:
             return False
-        qi += 1
+        query_i += 1
+        next_i = word_i
     return True
 
 
@@ -84,15 +86,17 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         regex = re.compile(r'[^\w\d](' + re.escape(prefix) + r'[\w\d]+)', re.M | re.U)
         for match in regex.finditer(text):
             candidates.append(Candidate(abs(match.start(1) - position), match.group(1)))
-            if len(candidates) > 100:
-                break
+
         if candidates:
             candidates.sort(lambda a, b: cmp(a.distance, b.distance))
             candidates = [candidate.text for candidate in candidates]
+            if len(candidates) > 100:
+                candidates = candidates[0:99]
         else:
             word_regex = re.compile(r'\b' + re.escape(prefix[0:1]) + r'[\w\d]+', re.M | re.U | re.I)
             words = word_regex.findall(text)
             candidates = [word for word in words if word != prefix and fuzzy_match(prefix, word)]
+            candidates.sort(lambda a, b: cmp(levenshtein(prefix, a), levenshtein(prefix, b)))
         if candidates:
             candidates.append(prefix)
         return uniq(candidates)
