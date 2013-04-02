@@ -83,10 +83,6 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
     def find_candidates(self, prefix, position, text):
         candidates = self.populate_candidates(prefix)
 
-        regex = re.compile(r'[^\w\d](' + re.escape(prefix) + r'[\w\d]+)', re.M | re.U)
-        for match in regex.finditer(text):
-            candidates.append(Candidate(abs(match.start(1) - position), match.group(1)))
-
         if candidates:
             candidates.sort(lambda a, b: cmp(a.distance, b.distance))
             candidates = [candidate.text for candidate in candidates]
@@ -104,10 +100,19 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
     def populate_candidates(self, prefix):
         settings_name, _ = os.path.splitext(os.path.basename(self.view.settings().get('syntax')))
         default_settings = sublime.load_settings("alternative_autocompletion.sublime-settings")
-        default_candidates = default_settings.get(settings_name)
+        default_candidates = default_settings.get(settings_name, [])
 
         user_settings = sublime.load_settings(settings_name + ".sublime-settings")
         user_candidates = user_settings.get('autocomplete')
+
+        merge = user_settings.get('merge', {}).get(settings_name)
+        if not merge:
+            merge = default_settings.get('merge', {}).get(settings_name)
+        if merge:
+            for merge_settings_name in merge:
+                default_candidates += default_settings.get(settings_name, [])
+                merge_settings = sublime.load_settings(merge_settings_name + ".sublime-settings")
+                user_candidates += merge_settings.get('autocomplete', [])
 
         # some languages, like "HTML 5", map to another language, like "PHP"
         # so if default_candidates is a str/unicode, look for that list
