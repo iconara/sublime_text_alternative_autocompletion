@@ -2,7 +2,6 @@ import sublime
 import sublime_plugin
 import re
 import os.path
-from levenshtein import levenshtein
 
 
 def uniq(list):
@@ -32,6 +31,12 @@ class Candidate:
 
     def __cmp__(self, other):
         return cmp(self.text, other.text)
+
+    def __str__(self):
+        return self.text
+
+    def __repr__(self):
+        return 'Candidate(text={self.text!r}, distance={self.distance!r})'.format(self=self)
 
 
 class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
@@ -81,18 +86,32 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
                 self.view.insert(self.edit, position, default)
 
     def find_candidates(self, prefix, position, text):
-        candidates = self.populate_candidates(prefix)
+        default_candidates = self.populate_candidates(prefix)
+        candidates = []
 
-        if candidates:
-            candidates.sort(lambda a, b: cmp(a.distance, b.distance))
-            candidates = [candidate.text for candidate in candidates]
-            if len(candidates) > 100:
-                candidates = candidates[0:99]
-        else:
-            word_regex = re.compile(r'\b' + re.escape(prefix[0:1]) + r'[\w\d]+', re.M | re.U | re.I)
-            words = word_regex.findall(text)
-            candidates = [word for word in words if word != prefix and fuzzy_match(prefix, word)]
-            candidates.sort(lambda a, b: cmp(levenshtein(prefix, a), levenshtein(prefix, b)))
+        if default_candidates:
+            default_candidates.sort(lambda a, b: cmp(a.distance, b.distance))
+            if len(default_candidates) > 100:
+                default_candidates = default_candidates[0:99]
+
+        word_regex = re.compile(r'\b' + re.escape(prefix[0:1]) + r'[\w\d]+', re.M | re.U | re.I)
+        for match in word_regex.finditer(text):
+            if match.start() < position < match.end():
+                continue
+            elif match.end() < position:
+                location = match.end()
+            else:
+                location = match.start()
+            distance = abs(position - location)
+            word = match.group()
+            if word != prefix and fuzzy_match(prefix, word):
+                candidates.append(Candidate(distance, word))
+
+        for default_candidate in default_candidates:
+            if not any(default_candidate.text == candidate.text for candidate in candidates):
+                candidates.append(default_candidate)
+        candidates.sort(lambda a, b: cmp(a.distance, b.distance))
+        candidates = [candidate.text for candidate in candidates]
         if candidates:
             candidates.append(prefix)
         return uniq(candidates)
