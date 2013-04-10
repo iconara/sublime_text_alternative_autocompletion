@@ -50,9 +50,9 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         # lines = self.view.substr(sublime.Region(0, self.view.size())).splitlines()
         # remove initial indentation.  this makes the "distance" calculation more equitable
         # text = "\n".join(map(lambda s: re.sub('^[ \t]+', '', s), lines))
-        self.insert_completion(self.view.sel()[0].b, text, cycle, default)
+        self.insert_completion(edit, self.view.sel()[0].b, text, cycle, default)
 
-    def insert_completion(self, position, text, cycle, default):
+    def insert_completion(self, edit, position, text, cycle, default):
         prefix_match = re.search(r'([\w\d_]+)\Z', text[0:position], re.M | re.U)
         if prefix_match:
             current_word_match = re.search(r'^([\w\d_]+)', text[prefix_match.start(1):], re.M | re.U)
@@ -68,7 +68,6 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
                 if current_word in self.candidates:
                     self.candidates.remove(current_word)
             if self.candidates:
-                edit = self.view.begin_edit()
                 self.view.erase(edit, sublime.Region(prefix_match.start(1), prefix_match.end(1)))
                 if self.previous_completion is None:
                     completion = self.candidates[0]
@@ -79,7 +78,6 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
                         direction = 1
                     completion = self.candidates[(self.candidates.index(self.previous_completion) + direction) % len(self.candidates)]
                 self.view.insert(edit, prefix_match.start(1), completion)
-                self.view.end_edit(edit)
                 self.previous_completion = completion
         else:
             if default and default != '':
