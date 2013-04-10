@@ -83,12 +83,16 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
             if default and default != '':
                 self.view.insert(self.edit, position, default)
 
+    @staticmethod
+    def get_distance(candidate):
+        return candidate.distance
+
     def find_candidates(self, prefix, position, text):
         default_candidates = self.populate_candidates(prefix)
         candidates = []
 
         if default_candidates:
-            default_candidates.sort(lambda a, b: cmp(a.distance, b.distance))
+            default_candidates.sort(key=self.get_distance)
             if len(default_candidates) > 100:
                 default_candidates = default_candidates[0:99]
 
@@ -108,7 +112,7 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         for default_candidate in default_candidates:
             if not any(default_candidate.text == candidate.text for candidate in candidates):
                 candidates.append(default_candidate)
-        candidates.sort(lambda a, b: cmp(a.distance, b.distance))
+        candidates.sort(key=self.get_distance)
         candidates = [candidate.text for candidate in candidates]
         if candidates:
             candidates.append(prefix)
@@ -133,7 +137,7 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
 
         # some languages, like "HTML 5", map to another language, like "PHP"
         # so if default_candidates is a str/unicode, look for that list
-        while isinstance(default_candidates, basestring):
+        while isinstance(default_candidates, str):
             settings_name = default_candidates
             default_candidates = default_settings.get(settings_name)
             if not user_candidates:
