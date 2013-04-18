@@ -10,7 +10,6 @@ def uniq(list):
 
 
 def fuzzy_match(prefix, word):
-    prefix, word = prefix.lower(), word.lower()
     query_i, word_i, next_i = 0, -1, -1
     while query_i < len(prefix):
         word_i = word.find(prefix[query_i], word_i + 1)
