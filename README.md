@@ -32,7 +32,7 @@ Installation
 Drop the entire folder in Sublime's `Packages` folder. You can do this using `git clone` thus:
 
     $ cd .../Packages  # Whatever the location is
-    $ git clone git://github.com/colinta/colinta__alternative_autocompletion.git
+    $ git clone git://github.com/colinta/colinta_alternative_autocompletion.git
 
 To map to the escape key, like TextMate:
 
