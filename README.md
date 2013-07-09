@@ -29,6 +29,8 @@ Tested with Sublime Text 2 build 2095 and later. The key bindings described belo
 Installation
 ------------
 
+### Sublime Text 2
+
 Drop the entire folder in Sublime's `Packages` folder. You can do this using `git clone` thus:
 
     $ cd .../Packages  # Whatever the location is
@@ -77,6 +79,13 @@ To map to the tab key it gets a bit more complex to preserve indentation behavio
         { "key": "text", "operator": "regex_contains", "operand": "\n" }
       ]
     },
+
+### Sublime Text 3
+
+1. Open the Sublime Text 2 Packages folder
+2. clone this repo, but use the `st3` branch
+
+       git clone -b st3 git@github.com:colinta/sublime_text_alternative_autocompletion
 
 Limitations
 -----------
