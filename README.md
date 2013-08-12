@@ -1,5 +1,5 @@
-Alternative autocompletion for Sublime Text 2
-=============================================
+Alternative autocompletion
+==========================
 
 This plugin adds an autocompletion command to Sublime Text 2 that acts similarly
 to TextMate:
@@ -24,17 +24,28 @@ is similar to Sublime's file/class matching algorithm. For example, typing
 Compatibility
 -------------
 
-Tested with Sublime Text 2 build 2095 and later. The key bindings described below will work for build 2134 (and onwards, presumably).
+Tested with Sublime Text 2 (`st2` branch) and Sublime Text 3 (`master` branch)
 
 Installation
 ------------
 
+1. Open the Sublime Text Packages folder
+
+    - OS X: ~/Library/Application Support/Sublime Text 3/Packages/
+    - Windows: %APPDATA%/Sublime Text 3/Packages/
+    - Linux: ~/.Sublime Text 3/Packages/
+
+2. clone this repo
+
 ### Sublime Text 2
 
-Drop the entire folder in Sublime's `Packages` folder. You can do this using `git clone` thus:
+1. Open the Sublime Text 2 Packages folder
+2. clone this repo, but use the `st2` branch
 
-    $ cd .../Packages  # Whatever the location is
-    $ git clone git://github.com/colinta/colinta_alternative_autocompletion.git
+       git clone -b st2 git@github.com:colinta/colinta_alternative_autocompletion.tmLanguage
+
+Instructions
+------------
 
 To map to the escape key, like TextMate:
 
@@ -79,13 +90,6 @@ To map to the tab key it gets a bit more complex to preserve indentation behavio
         { "key": "text", "operator": "regex_contains", "operand": "\n" }
       ]
     },
-
-### Sublime Text 3
-
-1. Open the Sublime Text 2 Packages folder
-2. clone this repo, but use the `st3` branch
-
-       git clone -b st3 git@github.com:colinta/sublime_text_alternative_autocompletion
 
 Limitations
 -----------
