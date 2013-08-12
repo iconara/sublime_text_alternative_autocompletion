@@ -49,9 +49,9 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         # lines = self.view.substr(sublime.Region(0, self.view.size())).splitlines()
         # remove initial indentation.  this makes the "distance" calculation more equitable
         # text = "\n".join(map(lambda s: re.sub('^[ \t]+', '', s), lines))
-        self.insert_completion(self.view.sel()[0].b, text, cycle, default)
+        self.insert_completion(edit, self.view.sel()[0].b, text, cycle, default)
 
-    def insert_completion(self, position, text, cycle, default):
+    def insert_completion(self, edit, position, text, cycle, default):
         prefix_match = re.search(r'([\w\d_]+)\Z', text[0:position], re.M | re.U)
         if prefix_match:
             current_word_match = re.search(r'^([\w\d_]+)', text[prefix_match.start(1):], re.M | re.U)
@@ -67,7 +67,6 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
                 if current_word in self.candidates:
                     self.candidates.remove(current_word)
             if self.candidates:
-                edit = self.view.begin_edit()
                 self.view.erase(edit, sublime.Region(prefix_match.start(1), prefix_match.end(1)))
                 if self.previous_completion is None:
                     completion = self.candidates[0]
@@ -78,18 +77,21 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
                         direction = 1
                     completion = self.candidates[(self.candidates.index(self.previous_completion) + direction) % len(self.candidates)]
                 self.view.insert(edit, prefix_match.start(1), completion)
-                self.view.end_edit(edit)
                 self.previous_completion = completion
         else:
             if default and default != '':
                 self.view.insert(self.edit, position, default)
+
+    @staticmethod
+    def get_distance(candidate):
+        return candidate.distance
 
     def find_candidates(self, prefix, position, text):
         default_candidates = self.populate_candidates(prefix)
         candidates = []
 
         if default_candidates:
-            default_candidates.sort(lambda a, b: cmp(a.distance, b.distance))
+            default_candidates.sort(key=self.get_distance)
             if len(default_candidates) > 100:
                 default_candidates = default_candidates[0:99]
 
@@ -109,7 +111,7 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
         for default_candidate in default_candidates:
             if not any(default_candidate.text == candidate.text for candidate in candidates):
                 candidates.append(default_candidate)
-        candidates.sort(lambda a, b: cmp(a.distance, b.distance))
+        candidates.sort(key=self.get_distance)
         candidates = [candidate.text for candidate in candidates]
         if candidates:
             candidates.append(prefix)
@@ -134,7 +136,7 @@ class AlternativeAutocompleteCommand(sublime_plugin.TextCommand):
 
         # some languages, like "HTML 5", map to another language, like "PHP"
         # so if default_candidates is a str/unicode, look for that list
-        while isinstance(default_candidates, basestring):
+        while isinstance(default_candidates, str):
             settings_name = default_candidates
             default_candidates = default_settings.get(settings_name)
             if not user_candidates:
